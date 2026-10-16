@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>시계를 읽어요 · 1학년 수학</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAF2FB; --paper:#FFFFFF; --ink:#1F3A68; --soft:#5B6F92;
+  --face:#FFF8DC; --rim:#1F3A68; --hour:#2463D6; --minute:#E5484D;
+  --ok:#2E9E5B; --line:#C9D7EC; --key:#F5F8FD; --keyOn:#FFD84D;
+  --glass1:#DDF0F6; --glass2:#FFFFFF; --glassRim:#8CC2D4;
+  --font:'Jua','Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0F1A2E; --paper:#182742; --ink:#EAF0FA; --soft:#A9B8D3;
+    --face:#26385A; --rim:#C9D7EC; --hour:#6FA0FF; --minute:#FF7A7E;
+    --ok:#55C987; --line:#2E426A; --key:#20314F; --keyOn:#C9A21E;
+    --glass1:#17344A; --glass2:#22465F; --glassRim:#4F8FA8;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);min-height:100vh;
+  padding:env(safe-area-inset-top,0) 12px env(safe-area-inset-bottom,0)}
+header{max-width:880px;margin:0 auto;padding:18px 4px 6px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(26px,5vw,38px);font-weight:400;letter-spacing:-.5px}
+nav{display:flex;gap:6px;background:var(--paper);padding:5px;border-radius:999px;border:2px solid var(--line)}
+nav button{font-family:var(--font);font-size:18px;border:0;background:transparent;color:var(--soft);padding:8px 16px;border-radius:999px;cursor:pointer}
+nav button.on{background:var(--ink);color:var(--paper)}
+main{max-width:880px;margin:0 auto;padding:8px 0 30px}
+section{display:none}
+section.on{display:grid;grid-template-columns:minmax(260px,400px) 1fr;gap:20px;align-items:start}
+@media (max-width:720px){section.on{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:2px solid var(--line);border-radius:22px;padding:18px}
+.clockWrap{position:relative;background:var(--paper);border:2px solid var(--line);border-radius:28px;padding:14px;touch-action:none;transition:background .4s,border-color .4s}
+.clockWrap.mirrorFrame{background:linear-gradient(135deg,var(--glass1) 0%,var(--glass2) 45%,var(--glass1) 100%);border:4px solid var(--glassRim)}
+.clockWrap.mirrorFrame::before{content:'거울';position:absolute;top:10px;left:14px;font-size:16px;color:var(--paper);background:var(--glassRim);padding:3px 10px;border-radius:999px;z-index:1}
+svg.clock{width:100%;height:auto;display:block;user-select:none;transition:transform .6s ease}
+svg.clock.mirror{transform:scaleX(-1)}
+.readout{text-align:center;font-size:clamp(34px,7vw,52px);margin:6px 0 2px;min-height:1.2em}
+.readout.hide{color:transparent;text-shadow:0 0 0 transparent;background:repeating-linear-gradient(90deg,var(--line) 0 18px,transparent 18px 24px);border-radius:10px}
+.sub{text-align:center;color:var(--soft);font-family:'Gowun Dodum',var(--font);font-size:17px;min-height:1.5em;margin:0 0 10px}
+.hint{color:var(--soft);font-family:'Gowun Dodum',var(--font);font-size:16px;line-height:1.6;margin:0 0 12px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-family:var(--font);font-size:20px;border:2px solid var(--line);background:var(--key);color:var(--ink);border-radius:16px;padding:12px 14px;cursor:pointer;flex:1;min-width:90px}
+.btn:active{transform:translateY(2px)}
+.btn.main{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn.on{background:var(--keyOn);border-color:var(--keyOn);color:#1F3A68}
+.btn:focus-visible,nav button:focus-visible,.key:focus-visible{outline:3px solid var(--keyOn);outline-offset:2px}
+.legend{display:flex;gap:16px;justify-content:center;font-size:17px;margin-top:6px;color:var(--soft)}
+.legend i{display:inline-block;width:22px;height:8px;border-radius:4px;vertical-align:middle;margin-right:6px}
+
+/* 문제 */
+.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.qnum{font-size:22px}
+.timer{font-size:34px;font-variant-numeric:tabular-nums}
+.ask{text-align:center;font-size:20px;color:var(--glassRim);margin:8px 0 0}
+.slots{display:flex;justify-content:center;align-items:baseline;gap:8px;font-size:40px;margin:6px 0 14px}
+.slot{min-width:72px;text-align:center;border-bottom:4px solid var(--ink);padding:0 6px}
+.slot.empty{color:var(--line)}
+.slot.focus{border-color:var(--hour)}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.key{font-family:var(--font);font-size:26px;padding:12px 0;border-radius:16px;border:2px solid var(--line);background:var(--key);color:var(--ink);cursor:pointer}
+.key.on{background:var(--keyOn);border-color:var(--keyOn);color:#1F3A68}
+.mins{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.msg{text-align:center;font-size:22px;min-height:34px;margin:10px 0 4px}
+.msg.ok{color:var(--ok)} .msg.no{color:var(--minute)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+.pop{animation:pop .45s}
+@keyframes pop{40%{transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.shake,.pop{animation:none}svg.clock{transition:none}}
+.setting{display:flex;gap:8px;margin-bottom:12px}
+.setting .btn{font-size:17px;padding:10px}
+label.name{display:block;font-size:18px;margin-bottom:10px}
+label.name input{font-family:var(--font);font-size:20px;width:100%;margin-top:6px;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:var(--key);color:var(--ink)}
+
+/* 결과·기록 */
+.result{text-align:center}
+.result .big{font-size:56px;margin:6px 0}
+.dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0 2px}
+.dots span{width:16px;height:16px;border-radius:50%;background:var(--line)}
+.dots span.ok{background:var(--ok)} .dots span.no{background:var(--minute)} .dots span.now{outline:3px solid var(--hour);outline-offset:1px}
+.bestGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.bestGrid .panel{text-align:center;padding:12px}
+.bestGrid .timer{font-size:28px}
+table{width:100%;border-collapse:collapse;font-size:18px}
+th,td{padding:9px 6px;text-align:center;border-bottom:2px solid var(--line)}
+th{color:var(--soft);font-weight:400;font-size:16px}
+td.best{color:var(--ok)}
+.tableWrap{overflow-x:auto}
+.empty{color:var(--soft);text-align:center;padding:30px 0;font-family:'Gowun Dodum',var(--font)}
+#recordSec.on{grid-template-columns:1fr}
+</style>
+</head>
+<body>
+<header>
+  <h1>시계를 읽어요</h1>
+  <nav>
+    <button data-tab="play" class="on">시계 놀이</button>
+    <button data-tab="quiz">문제 풀기</button>
+    <button data-tab="record">기록</button>
+  </nav>
+</header>
+
+<main>
+  <!-- 시계 놀이 -->
+  <section id="playSec" class="on">
+    <div class="clockWrap" id="playWrap"></div>
+    <div class="panel">
+      <div class="readout" id="playRead">3시</div>
+      <div class="sub" id="playSub"></div>
+      <p class="hint" id="playHint">빨간 긴바늘을 손가락으로 돌려 보세요. 긴바늘이 한 바퀴 돌면 파란 짧은바늘이 한 칸 움직여요.</p>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn" data-step="-60">1시간 전</button>
+        <button class="btn" data-step="60">1시간 후</button>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn" data-step="-30">30분 전</button>
+        <button class="btn" data-step="30">30분 후</button>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn" id="toggleRead">시각 가리기</button>
+        <button class="btn" id="toggleMirror">거울에 비춰 보기</button>
+      </div>
+      <div class="row">
+        <button class="btn main" id="randPlay">아무 시각</button>
+      </div>
+      <div class="legend"><span><i style="background:var(--hour)"></i>짧은바늘 · 시</span><span><i style="background:var(--minute)"></i>긴바늘 · 분</span></div>
+    </div>
+  </section>
+
+  <!-- 문제 풀기 -->
+  <section id="quizSec">
+    <div class="clockWrap" id="quizWrap"></div>
+    <div class="panel" id="quizPanel"></div>
+  </section>
+
+  <!-- 기록 -->
+  <section id="recordSec">
+    <div class="panel" id="recordPanel"></div>
+  </section>
+</main>
+
+<script>
+/* ---------- 시계 그리기 ---------- */
+const NS='http://www.w3.org/2000/svg';
+function makeClock(wrap){
+  const svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox','0 0 300 300');svg.setAttribute('class','clock');
+  let h=`<circle cx="150" cy="150" r="142" fill="var(--face)" stroke="var(--rim)" stroke-width="8"/>`;
+  for(let i=0;i<60;i++){
+    const a=i*6*Math.PI/180,big=i%5===0,r1=big?120:126,r2=133;
+    h+=`<line x1="${150+r1*Math.sin(a)}" y1="${150-r1*Math.cos(a)}" x2="${150+r2*Math.sin(a)}" y2="${150-r2*Math.cos(a)}" stroke="var(--rim)" stroke-width="${big?4:1.6}" stroke-linecap="round"/>`;
+  }
+  for(let n=1;n<=12;n++){
+    const a=n*30*Math.PI/180;
+    h+=`<text x="${150+100*Math.sin(a)}" y="${150-100*Math.cos(a)+11}" text-anchor="middle" font-size="30" fill="var(--ink)" font-family="Jua,sans-serif">${n}</text>`;
+  }
+  h+=`<g class="hh"><line x1="150" y1="165" x2="150" y2="85" stroke="var(--hour)" stroke-width="11" stroke-linecap="round"/></g>`;
+  h+=`<g class="mh"><line x1="150" y1="170" x2="150" y2="38" stroke="var(--minute)" stroke-width="6" stroke-linecap="round"/><circle cx="150" cy="44" r="9" fill="var(--minute)" opacity=".35"/></g>`;
+  h+=`<circle cx="150" cy="150" r="9" fill="var(--ink)"/>`;
+  svg.innerHTML=h;wrap.appendChild(svg);
+  const hh=svg.querySelector('.hh'),mh=svg.querySelector('.mh');
+  return{svg,wrap,
+    set(total){
+      total=((total%720)+720)%720;
+      const hr=Math.floor(total/60),mn=total%60;
+      hh.setAttribute('transform',`rotate(${hr*30+mn*.5} 150 150)`);
+      mh.setAttribute('transform',`rotate(${mn*6} 150 150)`);
+    },
+    mirror(on){svg.classList.toggle('mirror',on);wrap.classList.toggle('mirrorFrame',on)}
+  };
+}
+function norm(t){return((t%720)+720)%720}
+function timeText(total){
+  total=norm(total);
+  let hr=Math.floor(total/60),mn=total%60;if(hr===0)hr=12;
+  return mn===0?`${hr}시`:`${hr}시 ${mn}분`;
+}
+/* 거울에 비치면 시곗바늘이 좌우로 뒤집혀, 12시에서 실제 시각을 뺀 시각처럼 보인다 */
+function mirrorOf(t){return norm(720-t)}
+
+/* ---------- 시계 놀이 ---------- */
+const play=makeClock(document.getElementById('playWrap'));
+let playT=180,hideRead=false,playMirror=false;
+const playRead=document.getElementById('playRead'),playSub=document.getElementById('playSub'),playHint=document.getElementById('playHint');
+function drawPlay(){
+  play.set(playT);play.mirror(playMirror);
+  playRead.textContent=timeText(playT);playRead.classList.toggle('hide',hideRead);
+  playSub.textContent=playMirror&&!hideRead?`거울 속에서는 ${timeText(mirrorOf(playT))}처럼 보여요`:'';
+  playHint.textContent=playMirror
+    ?'거울 속 시계는 오른쪽과 왼쪽이 바뀌어요. 바늘을 돌리면서 진짜 시각과 거울 속 모양을 비교해 보세요.'
+    :'빨간 긴바늘을 손가락으로 돌려 보세요. 긴바늘이 한 바퀴 돌면 파란 짧은바늘이 한 칸 움직여요.';
+}
+drawPlay();
+document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{playT+=+b.dataset.step;drawPlay()});
+document.getElementById('toggleRead').onclick=e=>{hideRead=!hideRead;e.target.textContent=hideRead?'시각 보기':'시각 가리기';drawPlay()};
+document.getElementById('toggleMirror').onclick=e=>{playMirror=!playMirror;e.target.classList.toggle('on',playMirror);e.target.textContent=playMirror?'거울 치우기':'거울에 비춰 보기';drawPlay()};
+document.getElementById('randPlay').onclick=()=>{playT=(Math.floor(Math.random()*12))*60+(Math.random()<.5?0:30);drawPlay()};
+
+(function drag(){
+  const svg=play.svg;let mode=null;
+  function ang(e){
+    const r=svg.getBoundingClientRect();
+    let x=(e.clientX-r.left)/r.width*300-150;const y=(e.clientY-r.top)/r.height*300-150;
+    if(playMirror)x=-x; // 뒤집힌 시계에서도 손가락이 가리키는 바늘을 그대로 잡도록
+    return{a:(Math.atan2(x,-y)*180/Math.PI+360)%360,d:Math.hypot(x,y)};
+  }
+  svg.addEventListener('pointerdown',e=>{
+    const {a,d}=ang(e);
+    const t=norm(playT),mn=t%60,hAng=(Math.floor(t/60)*30+mn*.5)%360;
+    const diff=Math.min(Math.abs(a-hAng),360-Math.abs(a-hAng));
+    mode=(d<80&&diff<25)?'h':'m';
+    svg.setPointerCapture(e.pointerId);move(e);
+  });
+  function move(e){
+    if(!mode)return;
+    const {a}=ang(e);const t=norm(playT),cur=t%60;
+    if(mode==='m'){
+      const m=(Math.round(a/30)*5)%60;
+      let dlt=m-cur;if(dlt<-30)dlt+=60;if(dlt>30)dlt-=60;
+      playT+=dlt;
+    }else{
+      const hr=((Math.round((a-cur*.5)/30))%12+12)%12;
+      playT=hr*60+cur;
+    }
+    drawPlay();
+  }
+  svg.addEventListener('pointermove',move);
+  svg.addEventListener('pointerup',()=>mode=null);
+  svg.addEventListener('pointercancel',()=>mode=null);
+})();
+
+/* ---------- 문제 풀기 ---------- */
+const QN=10;
+const quiz=makeClock(document.getElementById('quizWrap'));
+const panel=document.getElementById('quizPanel');
+let range='half',mirror=false,name='',qs=[],qi=0,results=[],ansH=null,ansM=null,triedWrong=false;
+let t0=0,raf=0,elapsed=0,locked=false,running=false,flipTimer=0,curTab='play';
+try{name=localStorage.getItem('clk_name')||''}catch(e){}
+
+function fmt(ms){const s=ms/1000,m=Math.floor(s/60);return `${m}:${(s%60).toFixed(1).padStart(4,'0')}`}
+function tick(){elapsed=performance.now()-t0;const el=document.getElementById('timer');if(el)el.textContent=fmt(elapsed);raf=requestAnimationFrame(tick)}
+function inProgress(){return qs.length&&qi<QN&&running!==null}
+function pauseQuiz(){if(running){cancelAnimationFrame(raf);running=false}}
+function resumeQuiz(){if(!running&&qs.length&&qi<QN&&panel.querySelector('#timer')){t0=performance.now()-elapsed;running=true;tick()}}
+
+function startScreen(){
+  cancelAnimationFrame(raf);running=false;clearTimeout(flipTimer);
+  quiz.set(mirror?90:0);quiz.mirror(mirror);
+  panel.innerHTML=`
+    <label class="name">이름<input id="nm" maxlength="10" value="${name.replace(/"/g,'')}" placeholder="이름을 써요"></label>
+    <p class="hint" style="margin-bottom:6px">어떤 문제를 풀까요?</p>
+    <div class="setting">
+      <button class="btn ${range==='hour'?'on':''}" data-r="hour">몇 시</button>
+      <button class="btn ${range==='half'?'on':''}" data-r="half">몇 시 30분까지</button>
+    </div>
+    <p class="hint" style="margin-bottom:6px">어떤 시계를 볼까요?</p>
+    <div class="setting">
+      <button class="btn ${!mirror?'on':''}" data-mi="0">보통 시계</button>
+      <button class="btn ${mirror?'on':''}" data-mi="1">거울 시계 (도전)</button>
+    </div>
+    <p class="hint">${mirror
+      ?'거울에 비친 시계를 보고 <b>진짜 시각</b>을 맞혀요. 어려우면 시계 놀이에서 ‘거울에 비춰 보기’로 먼저 연습해요.'
+      :'시계를 보고 숫자를 눌러 시각을 맞혀요.'} 문제 ${QN}개를 다 풀 때까지 걸린 시간을 재요.</p>
+    <button class="btn main" id="go" style="width:100%;font-size:26px;padding:16px">시작</button>`;
+  const nm=document.getElementById('nm');nm.oninput=()=>{name=nm.value};
+  panel.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{range=b.dataset.r;startScreen()});
+  panel.querySelectorAll('[data-mi]').forEach(b=>b.onclick=()=>{mirror=b.dataset.mi==='1';startScreen()});
+  document.getElementById('go').onclick=()=>{
+    name=nm.value.trim();
+    try{localStorage.setItem('clk_name',name)}catch(e){}
+    begin();
+  };
+}
+function makeQs(){
+  const pool=[];for(let h=1;h<=12;h++){pool.push(h*60);if(range==='half')pool.push(h*60+30)}
+  const out=[];
+  while(out.length<QN){const v=pool[Math.floor(Math.random()*pool.length)];if(!out.includes(v))out.push(v)}
+  return out;
+}
+function begin(){qs=makeQs();qi=0;results=[];elapsed=0;showQ();t0=performance.now();running=true;cancelAnimationFrame(raf);tick()}
+function showQ(){
+  ansH=null;ansM=range==='hour'?0:null;triedWrong=false;locked=false;
+  clearTimeout(flipTimer);quiz.set(qs[qi]);quiz.mirror(mirror);
+  let keys='';for(let n=1;n<=12;n++)keys+=`<button class="key" data-h="${n}">${n}</button>`;
+  panel.innerHTML=`
+    <div class="top"><span class="qnum">${qi+1}번 문제</span><span class="timer" id="timer">${fmt(elapsed)}</span></div>
+    <div class="dots">${qs.map((_,i)=>`<span class="${results[i]===true?'ok':results[i]===false?'no':''} ${i===qi?'now':''}"></span>`).join('')}</div>
+    ${mirror?'<p class="ask">거울에 비친 시계예요. 진짜 시각은?</p>':''}
+    <div class="slots" id="slots"></div>
+    <div class="pad">${keys}</div>
+    ${range==='half'?`<div class="mins"><button class="key" data-m="0">정각</button><button class="key" data-m="30">30분</button></div>`:'<div style="height:10px"></div>'}
+    <div class="msg" id="msg"></div>
+    ${mirror?'<div class="row" style="margin-bottom:8px"><button class="btn" id="flip" hidden>뒤집어 보기</button></div>':''}
+    <div class="row"><button class="btn" id="clr">지우기</button><button class="btn main" id="chk">확인</button></div>`;
+  panel.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{if(locked)return;ansH=+b.dataset.h;drawAns()});
+  panel.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{if(locked)return;ansM=+b.dataset.m;drawAns()});
+  document.getElementById('clr').onclick=()=>{if(locked)return;ansH=null;ansM=range==='hour'?0:null;drawAns()};
+  document.getElementById('chk').onclick=check;
+  const flip=document.getElementById('flip');
+  if(flip)flip.onclick=()=>{
+    if(locked)return;
+    quiz.svg.classList.remove('mirror');clearTimeout(flipTimer);
+    flipTimer=setTimeout(()=>{if(mirror)quiz.svg.classList.add('mirror')},1800);
+  };
+  drawAns();
+}
+function drawAns(){
+  const s=document.getElementById('slots');
+  const hs=ansH===null?'<span class="slot empty focus">?</span>':`<span class="slot">${ansH}</span>`;
+  let ms='';
+  if(range==='half')ms=ansM===null?`<span class="slot empty ${ansH!==null?'focus':''}">?</span>`:`<span class="slot">${ansM===0?'정각':'30분'}</span>`;
+  s.innerHTML=`${hs}<span>시</span>${ms}`;
+  panel.querySelectorAll('[data-h]').forEach(b=>b.classList.toggle('on',+b.dataset.h===ansH));
+  panel.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',+b.dataset.m===ansM));
+}
+function check(){
+  if(locked)return;
+  const msg=document.getElementById('msg');
+  if(ansH===null||ansM===null){msg.className='msg no';msg.textContent=ansH===null?'몇 시인지 숫자를 눌러요':'정각인지 30분인지 골라요';return}
+  const t=qs[qi],h=Math.floor(t/60),m=t%60;
+  if(ansH===h&&ansM===m){
+    results[qi]=!triedWrong;locked=true;clearTimeout(flipTimer);
+    if(mirror)quiz.svg.classList.add('mirror');
+    msg.className='msg ok';msg.textContent=triedWrong?`맞아요! ${timeText(t)}`:'딩동댕! 맞아요';
+    panel.classList.remove('pop');void panel.offsetWidth;panel.classList.add('pop');
+    setTimeout(()=>{qi++;qi<QN?showQ():finish()},triedWrong?1200:700);
+    return;
+  }
+  triedWrong=true;
+  msg.className='msg no';
+  const ap=mirrorOf(t),apH=Math.floor(ap/60)||12,apM=ap%60;
+  if(mirror&&ansH===apH&&ansM===apM){
+    msg.textContent='거울 속 모양을 그대로 읽었어요. 왼쪽과 오른쪽을 바꿔 봐요';
+  }else{
+    msg.textContent=(m===30&&ansH===h+1)||(m===30&&h===12&&ansH===1)?'짧은바늘이 아직 지나지 않은 숫자를 봐요':
+      (ansH!==h?'짧은바늘을 다시 봐요':'긴바늘을 다시 봐요');
+  }
+  const flip=document.getElementById('flip');if(flip)flip.hidden=false;
+  const s=document.getElementById('slots');s.classList.remove('shake');void s.offsetWidth;s.classList.add('shake');
+}
+
+/* ---------- 기록 ---------- */
+const MODES=[['hour',false,'몇 시'],['half',false,'30분까지'],['hour',true,'거울 · 몇 시'],['half',true,'거울 · 30분까지']];
+const keyOf=r=>r.range+(r.mirror?'M':'');
+const labelOf=r=>(MODES.find(x=>x[0]===r.range&&x[1]===!!r.mirror)||[,,''])[2];
+function getRecs(){try{return JSON.parse(localStorage.getItem('clk_recs')||'[]')}catch(e){return[]}}
+function setRecs(r){try{localStorage.setItem('clk_recs',JSON.stringify(r))}catch(e){}}
+function finish(){
+  cancelAnimationFrame(raf);running=false;
+  const ok=results.filter(x=>x).length;
+  const rec={name:name||'이름 없음',range,mirror,ok,ms:Math.round(elapsed),at:Date.now()};
+  const recs=getRecs();
+  const prevBest=recs.filter(r=>keyOf(r)===keyOf(rec)&&r.ok===QN).reduce((b,r)=>Math.min(b,r.ms),Infinity);
+  recs.push(rec);setRecs(recs);
+  const newBest=ok===QN&&rec.ms<prevBest;
+  panel.innerHTML=`<div class="result">
+    <div class="hint" style="margin:0">${labelOf(rec)} · ${QN}문제 중 처음에 맞힌 문제</div>
+    <div class="big">${ok}개</div>
+    <div class="dots">${results.map(x=>`<span class="${x?'ok':'no'}"></span>`).join('')}</div>
+    <div class="timer" style="margin:14px 0 4px">${fmt(rec.ms)}</div>
+    <div class="msg ${newBest?'ok':''}">${newBest?'최고 기록이에요!':ok===QN?'모두 맞혔어요!':mirror?'시계 놀이에서 거울에 비춰 보며 연습해요':'틀린 시각은 시계 놀이에서 돌려 봐요'}</div>
+    <div class="row" style="margin-top:10px"><button class="btn" id="toRec">기록 보기</button><button class="btn main" id="again">다시 하기</button></div>
+  </div>`;
+  document.getElementById('again').onclick=begin;
+  document.getElementById('toRec').onclick=()=>showTab('record');
+}
+function drawRecords(){
+  const p=document.getElementById('recordPanel'),recs=getRecs();
+  if(!recs.length){p.innerHTML='<div class="empty">아직 기록이 없어요. 문제 풀기를 해 보세요.</div>';return}
+  const best={};recs.forEach(r=>{const k=keyOf(r);if(r.ok===QN&&(best[k]===undefined||r.ms<best[k]))best[k]=r.ms});
+  const rows=[...recs].sort((a,b)=>b.at-a.at).map(r=>{
+    const d=new Date(r.at),k=keyOf(r);
+    return `<tr><td>${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</td>
+      <td>${String(r.name).replace(/&/g,'&amp;').replace(/</g,'&lt;')}</td><td>${labelOf(r)}</td>
+      <td>${r.ok}/${QN}</td><td class="${best[k]===r.ms&&r.ok===QN?'best':''}">${fmt(r.ms)}</td></tr>`}).join('');
+  p.innerHTML=`
+    <div class="bestGrid">${MODES.map(([rg,mi,lb])=>{const k=rg+(mi?'M':'');
+      return `<div class="panel"><div class="hint" style="margin:0">${lb}</div><div class="timer">${best[k]!==undefined?fmt(best[k]):'-'}</div></div>`}).join('')}</div>
+    <p class="hint">최고 기록은 ${QN}문제를 모두 처음에 맞혔을 때만 세요.</p>
+    <div class="tableWrap"><table><thead><tr><th>날짜</th><th>이름</th><th>문제</th><th>맞힘</th><th>걸린 시간</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <button class="btn" id="wipe" style="margin-top:14px">기록 모두 지우기</button>`;
+  document.getElementById('wipe').onclick=()=>{if(confirm('기록을 모두 지울까요?')){setRecs([]);drawRecords()}};
+}
+
+/* ---------- 탭 ---------- */
+function showTab(t){
+  curTab=t;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  ['play','quiz','record'].forEach(k=>document.getElementById(k+'Sec').classList.toggle('on',k===t));
+  if(t!=='quiz')pauseQuiz();
+  if(t==='quiz'){
+    if(!qs.length||qi>=QN)startScreen();
+    else resumeQuiz();
+  }
+  if(t==='record')drawRecords();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden)pauseQuiz();
+  else if(curTab==='quiz')resumeQuiz();
+});
+startScreen();
+</script>
+</body>
+</html>
